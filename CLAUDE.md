@@ -12,6 +12,13 @@ before starting a slice.
 
 **Run `npm run check` before saying a task is done.** Report failures honestly, with output.
 
+## CI
+
+A task isn't done until CI passes on the pull request. If it fails, read the logs
+(`gh run view --log-failed`) and fix it before reporting back. See `docs/ci.md`.
+
+Tests and CI never touch the network or real TTS. Mock Kokoro, Gutendex and any HTTP calls in tests.
+
 ## Layout
 
 | Folder          | Belongs here                                                                        |
