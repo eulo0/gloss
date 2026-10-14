@@ -20,10 +20,12 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "check": "npm run lint && npm run typecheck && npm run test",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@electron-forge/cli": "^8.0.1",
     "@electron-forge/maker-deb": "^8.0.1",
     "@electron-forge/maker-rpm": "^8.0.1",
@@ -54,5 +56,8 @@
     "electron-squirrel-startup": "^1.0.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

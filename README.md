@@ -1,5 +1,7 @@
 # Gloss
 
+[![CI](https://github.com/eulo0/gloss/actions/workflows/ci.yml/badge.svg)](https://github.com/eulo0/gloss/actions/workflows/ci.yml)
+
 A personal Windows desktop app for reading [Project Gutenberg](https://www.gutenberg.org/) books with
 audiobook-quality text-to-speech (local Kokoro) and word-by-word highlighting, plus an AI "margin"
 assistant. Built with Electron, React and TypeScript.
@@ -24,14 +26,14 @@ downloads the Electron binary.
 
 ## Develop
 
-| Command             | What it does                                       |
-| ------------------- | -------------------------------------------------- |
-| `npm start`         | Run the app in development                         |
-| `npm run lint`      | ESLint                                             |
-| `npm run format`    | Prettier (write); `npm run format:check` to verify |
-| `npm run typecheck` | `tsc --noEmit`                                     |
-| `npm test`          | Vitest unit tests                                  |
-| `npm run check`     | lint + typecheck + test (run before every commit)  |
+| Command             | What it does                                        |
+| ------------------- | --------------------------------------------------- |
+| `npm start`         | Run the app in development                          |
+| `npm run lint`      | ESLint                                              |
+| `npm run format`    | Prettier (write); `npm run format:check` to verify  |
+| `npm run typecheck` | `tsc --noEmit`                                      |
+| `npm test`          | Vitest unit tests                                   |
+| `npm run check`     | lint + format:check + typecheck + test (same as CI) |
 
 ## Package
 

@@ -19,6 +19,7 @@ Each decision is numbered as in the original brief. To change one, propose it fi
 15. **better-sqlite3 with Forge's auto-unpack-natives plugin;** plain SQL with numbered migrations. Native modules must be unpacked from asar to load.
 16. **EPUB parsing: yauzl + htmlparser2,** in main/worker only. Small, streaming, no DOM needed.
 17. **Testing: Vitest (+ React Testing Library); Playwright e2e later.** Logging: electron-log.
+18. **CI: GitHub Actions; pure-TS checks on Linux, packaging on Windows; Dependabot with grouped updates; audit is informational.** Why: agents write most of the code, so every pull request must pass the same checks they run locally (`npm run check`). Linux runners are fast and cheap for lint, typecheck and tests; Windows minutes are spent once per run, on `package`, where native-module and path problems show up. Grouped Dependabot updates keep dependency churn to a few pull requests a week. `npm audit` shows in the run but isn't required, so a new advisory doesn't block unrelated work. See `docs/ci.md`.
 
 ## Foundation-commit notes (not part of the original list)
 
