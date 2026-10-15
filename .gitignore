@@ -155,3 +155,8 @@ out/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Spikes: model downloads and generated audio/timings stay local
+spikes/*/.model-cache/
+spikes/*/out/
+*.wav

@@ -1,0 +1,17 @@
+{
+  "name": "gloss-spike-kokoro",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Slice 0 spike: can kokoro-js give word-level timestamps? Not part of the app.",
+  "type": "module",
+  "scripts": {
+    "start": "node run.mts",
+    "bench": "node bench.mts",
+    "typecheck": "node ../../node_modules/typescript/bin/tsc -p ."
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "kokoro-js": "1.2.1",
+    "phonemizer": "1.2.1"
+  }
+}

@@ -1,0 +1,44 @@
+export interface Passage {
+  name: string;
+  text: string;
+}
+
+export const PASSAGES: Passage[] = [
+  {
+    name: 'plain',
+    text: 'The old house stood at the end of a quiet lane, and nobody had lived there for years.',
+  },
+  {
+    name: 'punctuation',
+    text:
+      '“Is it true?” she asked; he did not answer. Instead—after a long pause—he said, ' +
+      '“Perhaps: but what does it matter, now (or ever)?” Then, quite suddenly, he laughed!',
+  },
+  {
+    name: 'awkward',
+    text:
+      'Mr. Darcy paid £3.50 at 4 p.m. on 12 March 1813. Mrs. Bennet’s well-known, ' +
+      'twenty-first-century self-made neighbour owed $1,200 and 3.75 guineas to Dr. Jones & Co.',
+  },
+  {
+    // Opening of Pride and Prejudice (public domain), for drift over a longer passage.
+    name: 'long',
+    text:
+      'It is a truth universally acknowledged, that a single man in possession of a good fortune, ' +
+      'must be in want of a wife. However little known the feelings or views of such a man may be ' +
+      'on his first entering a neighbourhood, this truth is so well fixed in the minds of the ' +
+      'surrounding families, that he is considered the rightful property of some one or other of ' +
+      'their daughters. “My dear Mr. Bennet,” said his lady to him one day, “have you heard that ' +
+      'Netherfield Park is let at last?” Mr. Bennet replied that he had not. “But it is,” returned ' +
+      'she; “for Mrs. Long has just been here, and she told me all about it.” Mr. Bennet made no ' +
+      'answer. “Do you not want to know who has taken it?” cried his wife impatiently. “You want to ' +
+      'tell me, and I have no objection to hearing it.” This was invitation enough. “Why, my dear, ' +
+      'you must know, Mrs. Long says that Netherfield is taken by a young man of large fortune from ' +
+      'the north of England; that he came down on Monday in a chaise and four to see the place, and ' +
+      'was so much delighted with it, that he agreed with Mr. Morris immediately; that he is to take ' +
+      'possession before Michaelmas, and some of his servants are to be in the house by the end of ' +
+      'next week.” “What is his name?” “Bingley.” “Is he married or single?” “Oh! Single, my dear, ' +
+      'to be sure! A single man of large fortune; four or five thousand a year. What a fine thing ' +
+      'for our girls!”',
+  },
+];

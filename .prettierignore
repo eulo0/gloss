@@ -4,3 +4,5 @@ out
 dist
 coverage
 package-lock.json
+spikes/*/.model-cache
+spikes/*/out
