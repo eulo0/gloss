@@ -1,10 +1,11 @@
 /**
  * Slice 0 spike: synthesise test passages with kokoro-js and derive word-level timings.
  *
- *   node run.mts [--dtype fp32|q8] [--threads N] [--voice af_heart] [--cache-dir DIR] [--worker]
+ *   node run.mts [--dtype fp32|q8] [--threads N] [--speeds 1,0.75,1.5] [--voice af_heart]
+ *                [--cache-dir DIR] [--worker]
  *
- * Writes out/<passage>.wav, out/<passage>.timings.json and out/preview.html (open it to listen with
- * the highlight). --worker runs synthesis in a worker thread and reports main-thread event-loop lag.
+ * Writes out/<passage>[@<speed>x].wav and .timings.json for each Kokoro speed, and out/preview.html:
+ * a player to try playback speed with the highlight (see preview.mts). --worker runs synthesis in a worker thread and reports main-thread event-loop lag.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
@@ -29,6 +30,7 @@ import {
   type Dtype,
 } from './kokoro.mts';
 import { PASSAGES } from './passages.mts';
+import { buildPreview } from './preview.mts';
 
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const OUT = here('./out/');
@@ -39,6 +41,8 @@ const { values: args } = parseArgs({
     voice: { type: 'string', default: 'af_heart' },
     'cache-dir': { type: 'string', default: here('./.model-cache/') },
     threads: { type: 'string', default: '0' },
+    // Kokoro speeds to generate; the preview compares them with playbackRate stretching.
+    speeds: { type: 'string', default: '1' },
     worker: { type: 'boolean', default: false },
   },
 });
@@ -77,7 +81,7 @@ function wav(samples: Float32Array): Buffer {
   return b;
 }
 
-async function run({ dtype, threads, voice, cacheDir }: Args) {
+async function run({ dtype, threads, speeds, voice, cacheDir }: Args) {
   setCacheDir(cacheDir);
   await mkdir(OUT, { recursive: true });
 
@@ -91,123 +95,136 @@ async function run({ dtype, threads, voice, cacheDir }: Args) {
   const rssAfterLoad = process.memoryUsage().rss;
 
   const results = [];
-  for (const passage of PASSAGES) {
-    const source = tokenizeSource(passage.text);
-    const normalized = source.map(normalizeWord);
-    const chunks = [];
-    const audio: Float32Array[] = [];
-    const spans = new Map<number, Span>();
-    let offset = 0;
-    let synthMs = 0;
-    let phonemizeMs = 0;
-    let pauseRms: number[] = [];
-    let wordRms: number[] = [];
+  for (const speed of speeds)
+    for (const passage of PASSAGES) {
+      const file = speed === 1 ? passage.name : `${passage.name}@${speed}x`;
+      const source = tokenizeSource(passage.text);
+      const normalized = source.map(normalizeWord);
+      const chunks = [];
+      const audio: Float32Array[] = [];
+      const spans = new Map<number, Span>();
+      let offset = 0;
+      let synthMs = 0;
+      let phonemizeMs = 0;
+      let pauseRms: number[] = [];
+      let wordRms: number[] = [];
 
-    for (const sentence of splitSentences(normalized)) {
-      const spoken = spokenWords(sentence);
-      if (spoken.length === 0) continue;
-      const text = spokenText(sentence);
+      for (const sentence of splitSentences(normalized)) {
+        const spoken = spokenWords(sentence);
+        if (spoken.length === 0) continue;
+        const text = spokenText(sentence);
 
-      let t = performance.now();
-      const phonemes = await phonemizeText(text);
-      const refs = await Promise.all(spoken.map((w) => phonemizeWord(w.text)));
-      phonemizeMs += performance.now() - t;
+        let t = performance.now();
+        const phonemes = await phonemizeText(text);
+        const refs = await Promise.all(spoken.map((w) => phonemizeWord(w.text)));
+        phonemizeMs += performance.now() - t;
 
-      t = performance.now();
-      const { waveform, durations } = await synthesize(tts, phonemes, voice);
-      synthMs += performance.now() - t;
+        t = performance.now();
+        const { waveform, durations } = await synthesize(tts, phonemes, voice, speed);
+        synthMs += performance.now() - t;
 
-      const tokens = tokenSpans(durations);
-      const frameSamples = tokens.at(-1)?.end ?? 0;
-      const ws = wordSpans(phonemes, refs, durations);
-      for (const [id, s] of sourceSpans(
-        spoken.map((w) => w.sourceId),
-        ws,
-      )) {
-        spans.set(id, { start: s.start + offset, end: s.end + offset });
+        const tokens = tokenSpans(durations);
+        const frameSamples = tokens.at(-1)?.end ?? 0;
+        const ws = wordSpans(phonemes, refs, durations);
+        for (const [id, s] of sourceSpans(
+          spoken.map((w) => w.sourceId),
+          ws,
+        )) {
+          spans.set(id, { start: s.start + offset, end: s.end + offset });
+        }
+
+        // Energy check: predicted pauses (punctuation/space tokens of 100 ms or more) should be
+        // quieter than predicted words if the timings line up with the audio.
+        [...phonemes].forEach((ch, k) => {
+          const tok = tokens[k + 1];
+          if (/[\s;:,.!?—…"]/.test(ch) && tok.end - tok.start >= 0.1 * SAMPLE_RATE) {
+            pauseRms.push(rms(waveform, tok));
+          }
+        });
+        for (const s of ws) if (s) wordRms.push(rms(waveform, s));
+
+        chunks.push({
+          text,
+          phonemes,
+          offsetSeconds: secs(offset),
+          waveformSamples: waveform.length,
+          durationSamples: frameSamples,
+          refs,
+          tokens: ['<pad>', ...phonemes, '<pad>'].map((ph, k) => ({
+            ph,
+            frames: round(durations[k], 2),
+            start: secs(tokens[k].start + offset),
+            end: secs(tokens[k].end + offset),
+          })),
+        });
+        audio.push(waveform);
+        offset += waveform.length;
       }
 
-      // Energy check: predicted pauses (punctuation/space tokens of 100 ms or more) should be
-      // quieter than predicted words if the timings line up with the audio.
-      [...phonemes].forEach((ch, k) => {
-        const tok = tokens[k + 1];
-        if (/[\s;:,.!?—…"]/.test(ch) && tok.end - tok.start >= 0.1 * SAMPLE_RATE) {
-          pauseRms.push(rms(waveform, tok));
-        }
+      const all = new Float32Array(offset);
+      let o = 0;
+      for (const a of audio) {
+        all.set(a, o);
+        o += a.length;
+      }
+      await writeFile(`${OUT}${file}.wav`, wav(all));
+
+      const words = normalized.map((n, i) => {
+        const s = spans.get(n.sourceId);
+        return {
+          id: n.sourceId,
+          text: source[i].text,
+          spoken: n.words,
+          start: s ? secs(s.start) : null,
+          end: s ? secs(s.end) : null,
+        };
       });
-      for (const s of ws) if (s) wordRms.push(rms(waveform, s));
-
-      chunks.push({
-        text,
-        phonemes,
-        offsetSeconds: secs(offset),
-        waveformSamples: waveform.length,
-        durationSamples: frameSamples,
-        refs,
-        tokens: ['<pad>', ...phonemes, '<pad>'].map((ph, k) => ({
-          ph,
-          frames: round(durations[k], 2),
-          start: secs(tokens[k].start + offset),
-          end: secs(tokens[k].end + offset),
-        })),
-      });
-      audio.push(waveform);
-      offset += waveform.length;
-    }
-
-    const all = new Float32Array(offset);
-    let o = 0;
-    for (const a of audio) {
-      all.set(a, o);
-      o += a.length;
-    }
-    await writeFile(`${OUT}${passage.name}.wav`, wav(all));
-
-    const words = normalized.map((n, i) => {
-      const s = spans.get(n.sourceId);
-      return {
-        id: n.sourceId,
-        text: source[i].text,
-        spoken: n.words,
-        start: s ? secs(s.start) : null,
-        end: s ? secs(s.end) : null,
+      const audioSeconds = offset / SAMPLE_RATE;
+      const summary = {
+        passage: passage.name,
+        speed,
+        model: TIMESTAMPED_MODEL,
+        dtype,
+        voice,
+        sourceWords: words.length,
+        wordsWithTiming: words.filter((w) => w.start !== null).length,
+        wordsWithoutTiming: words
+          .filter((w) => w.start === null && w.spoken.length > 0)
+          .map((w) => w.text),
+        audioSeconds: round(audioSeconds),
+        synthSeconds: round(synthMs / 1000),
+        phonemizeSeconds: round(phonemizeMs / 1000),
+        realTimeFactor: round(synthMs / 1000 / audioSeconds),
+        // Drift: the largest per-sentence gap between summed durations and waveform length.
+        maxDriftSamples: Math.max(
+          ...chunks.map((c) => Math.abs(c.waveformSamples - c.durationSamples)),
+        ),
+        pauseToWordRms: round(median(pauseRms) / median(wordRms)),
+        quietWords: wordRms.filter((r) => r < 0.1 * median(wordRms)).length,
       };
-    });
-    const audioSeconds = offset / SAMPLE_RATE;
-    const summary = {
-      passage: passage.name,
-      model: TIMESTAMPED_MODEL,
-      dtype,
-      voice,
-      sourceWords: words.length,
-      wordsWithTiming: words.filter((w) => w.start !== null).length,
-      wordsWithoutTiming: words
-        .filter((w) => w.start === null && w.spoken.length > 0)
-        .map((w) => w.text),
-      audioSeconds: round(audioSeconds),
-      synthSeconds: round(synthMs / 1000),
-      phonemizeSeconds: round(phonemizeMs / 1000),
-      realTimeFactor: round(synthMs / 1000 / audioSeconds),
-      // Drift: the largest per-sentence gap between summed durations and waveform length.
-      maxDriftSamples: Math.max(
-        ...chunks.map((c) => Math.abs(c.waveformSamples - c.durationSamples)),
-      ),
-      pauseToWordRms: round(median(pauseRms) / median(wordRms)),
-      quietWords: wordRms.filter((r) => r < 0.1 * median(wordRms)).length,
-    };
-    await writeFile(
-      `${OUT}${passage.name}.timings.json`,
-      JSON.stringify({ ...summary, words, chunks }, null, 1),
-    );
-    results.push({ summary, words });
-    pauseRms = [];
-    wordRms = [];
-  }
+      await writeFile(
+        `${OUT}${file}.timings.json`,
+        JSON.stringify({ ...summary, words, chunks }, null, 1),
+      );
+      results.push({ summary, words, file });
+      pauseRms = [];
+      wordRms = [];
+    }
 
   clearInterval(sampler);
   const cpu = process.cpuUsage(cpu0);
   const wallSeconds = (performance.now() - t0) / 1000;
-  await writeFile(`${OUT}preview.html`, preview(results));
+  await writeFile(
+    `${OUT}preview.html`,
+    buildPreview(
+      results.map(({ summary, words, file }) => ({
+        passage: summary.passage,
+        speed: summary.speed,
+        file: `${file}.wav`,
+        words,
+      })),
+    ),
+  );
   return {
     dtype,
     threads: threads || 'auto',
@@ -220,40 +237,7 @@ async function run({ dtype, threads, voice, cacheDir }: Args) {
   };
 }
 
-function preview(
-  results: {
-    summary: { passage: string };
-    words: { text: string; start: number | null; end: number | null }[];
-  }[],
-): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const sections = results
-    .map(
-      ({ summary, words }) => `<section><h2>${summary.passage}</h2>
-<audio controls src="${summary.passage}.wav"></audio>
-<p>${words.map((w) => (w.start === null ? esc(w.text) : `<span data-start="${w.start}" data-end="${w.end}">${esc(w.text)}</span>`)).join(' ')}</p></section>`,
-    )
-    .join('\n');
-  return `<!doctype html><meta charset="utf-8"><title>Kokoro timing preview</title>
-<style>body{font:18px/1.7 Georgia,serif;max-width:46em;margin:2em auto;padding:0 1em}span.on{background:#ffcf66}audio{width:100%}</style>
-${sections}
-<script>
-for (const s of document.querySelectorAll('section')) {
-  const a = s.querySelector('audio'), spans = [...s.querySelectorAll('span[data-start]')];
-  let cur = null;
-  const tick = () => {
-    const t = a.currentTime;
-    let hit = null;
-    for (const sp of spans) { if (+sp.dataset.start <= t) hit = sp; else break; }
-    if (hit !== cur) { cur?.classList.remove('on'); hit?.classList.add('on'); cur = hit; }
-    if (!a.paused) requestAnimationFrame(tick);
-  };
-  a.addEventListener('play', tick); a.addEventListener('seeked', tick);
-}
-</script>`;
-}
-
-type Args = { dtype: Dtype; threads: number; voice: string; cacheDir: string };
+type Args = { dtype: Dtype; threads: number; speeds: number[]; voice: string; cacheDir: string };
 
 if (!isMainThread) {
   parentPort?.postMessage(await run(workerData as Args));
@@ -261,6 +245,7 @@ if (!isMainThread) {
   const opts: Args = {
     dtype: args.dtype as Dtype,
     threads: Number(args.threads),
+    speeds: args.speeds.split(',').map(Number),
     voice: args.voice,
     cacheDir: args['cache-dir'],
   };
