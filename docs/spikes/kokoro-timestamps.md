@@ -194,6 +194,23 @@ Start of `plain.timings.json`:
 
 Note "of a" (`əvə`, one espeak group) split into `of` 1.675–1.75 and `a` 1.75–1.8.
 
+### Playback speed
+
+Both ways of changing speed keep the timings valid:
+
+- **Stretch at playback** (`audio.playbackRate`, pitch kept): the timing JSON doesn't change,
+  because the highlight reads `audio.currentTime`, which is position in the file. It's instant, any
+  speed works, and there's one cached file per chapter.
+- **Generate at a speed** (Kokoro's `speed` input): durations still sum exactly to the audio
+  (0.75×: 22.98 s, 1.5×: 10.83 s for `awkward`, drift 0 in all 12 passage × speed runs). Each speed
+  is a separate generation and cache entry.
+
+`out/preview.html` is a prototype player for comparing the two. Switching between files keeps your
+place by word ID; for example, word 57 is at 18.73 s at 1× and 25.75 s at 0.75×. A hidden Electron
+window was used to check it (play, speed change, method switch, click-to-seek; no console errors).
+Suggested default: stretch for the everyday control (about 0.75×–2×), with generated speed later as a
+voice setting if slow speeds sound poor stretched. How it sounds still needs a by-ear check.
+
 ## Caveats
 
 - **We rely on kokoro-js internals.** We use its `KokoroTTS` class, tokenizer, voice files and
@@ -258,12 +275,12 @@ From a clean checkout (needs network on first run to download the model, ~311 MB
 ```sh
 cd spikes/kokoro
 npm ci                         # installs only the spike's deps; not part of the app
-node run.mts --worker --threads 4   # writes out/*.wav, out/*.timings.json, out/preview.html
+node run.mts --worker --threads 4 --speeds 1,0.75,1.5   # writes out/*.wav, *.timings.json, preview.html
 node bench.mts                 # speed: export, dtype, thread count, DirectML
 npm run typecheck              # typechecks the spike (root typecheck doesn't include it)
 ```
 
-Options for `run.mts`: `--dtype fp32|q8`, `--threads N` (0 = auto), `--voice af_heart`,
+Options for `run.mts`: `--dtype fp32|q8`, `--threads N` (0 = auto), `--speeds` (Kokoro speeds to generate, default `1`), `--voice af_heart`,
 `--cache-dir DIR` (default `spikes/kokoro/.model-cache/`, gitignored). `npm ci` reports that
 install scripts were skipped (npm 11). They aren't needed on Windows: onnxruntime-node ships its
 Windows binaries, and the scripts only fetch Linux CUDA builds and rebuild `sharp`.
