@@ -18,12 +18,16 @@ note, so "chapter = spine item" gives coarse chapters there (flagged in the PR, 
 No-images files replace each image with `<span id="img_…">Illustration:</span>`, which the brief
 didn't mention; those spans are skipped. I couldn't drive the native file dialog, so the human
 does every in-app check (`npm start` and the packaged app). Prettier turned a ` ` escape in a
-test into a literal invisible character.
+test into a literal invisible character. A bug from the foundation commit came up: packages had no
+renderer (Forge's `outDir` resolved against `root: 'src/renderer'`), so the packaged app would have
+opened blank. It's fixed here in its own `fix(build)` commit. CI's `package` job only checks that
+packaging succeeds, so it never saw this.
 
 **What I'd brief differently:** Check fixture availability on gutenberg.org before naming a
 format. Look at how one real EPUB 3 is split before fixing the chapter unit. Say up front how
 in-app checks are done when a native dialog is in the way (e.g. a dev-only path override, or the
-human does them).
+human does them). Consider a CI step that lists the packaged asar and fails if
+`.vite/renderer/main_window/index.html` is missing.
 
 ### 2026-10-15 · slice 0
 
