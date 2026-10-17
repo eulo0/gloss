@@ -22,7 +22,7 @@ uses only the typed preload API (`src/shared/ipc.ts`); `src/workers/` hosts all 
 
 | #   | Slice               | Summary                                                         |
 | --- | ------------------- | --------------------------------------------------------------- |
-| 0   | Spike               | Can `kokoro-js` give word timestamps? Else Python sidecar       |
+| 0   | Spike               | Done: `kokoro-js` + timestamped export gives word timestamps    |
 | 1   | EPUB parsing        | Parse a Gutenberg EPUB into chapters/paragraphs/words with IDs  |
 | 2   | Reader view         | Render the text; design tokens, themes (needs `docs/design.md`) |
 | 3   | Generation pipeline | Kokoro worker, ffmpeg → Opus, timing JSON, cache, queue         |
