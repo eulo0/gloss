@@ -81,8 +81,24 @@ function isSkipped(name: string, attribs: Record<string, string>): boolean {
   if (classes(attribs).includes('pagenum')) return true;
   if ((attribs['epub:type'] ?? '').split(/\s+/).includes('pagebreak')) return true;
   // No-images Gutenberg files replace each <img> with <span id="img_…">alt text</span>.
-  if (name === 'span' && (attribs.id ?? '').startsWith('img_')) return true;
+  if (isImagePlaceholder(name, attribs)) return true;
+  // Illustration captions belong to the (skipped) image, even when placed inside a heading.
+  if (classes(attribs).includes('caption')) return true;
   return false;
+}
+
+/**
+ * A decorative initial ("drop cap") is drawn as an image whose alt text is the missing letter:
+ * `<img alt="M"/>R. BENNET` must read "MR. BENNET". No-images files turn it into
+ * `<span id="img_…">M</span>`. Only a single capital letter counts, so real alt text stays out.
+ */
+function dropCapLetter(text: string): string | null {
+  const t = text.trim();
+  return /^\p{Lu}$/u.test(t) ? t : null;
+}
+
+function isImagePlaceholder(name: string, attribs: Record<string, string>): boolean {
+  return name === 'span' && (attribs.id ?? '').startsWith('img_');
 }
 
 /**
@@ -100,6 +116,8 @@ export function parseXhtml(html: string, anchorIds: ReadonlySet<string> = new Se
   let depth = 0;
   /** Depth of the element being skipped, or -1. */
   let skipAt = -1;
+  /** Text inside a skipped no-images placeholder, kept in case it is a drop cap. */
+  let placeholder: string | null = null;
   let emDepth = 0;
   let text = '';
   /** Emphasised [start, end) ranges of `text`, ascending, adjacent ones merged. */
@@ -144,8 +162,11 @@ export function parseXhtml(html: string, anchorIds: ReadonlySet<string> = new Se
         }
         if (isPgBoilerplate(attribs)) pgMarkup = true;
         if (name === 'img' && classes(attribs).includes('x-ebookmaker-wrapper')) imagePage = true;
+        const letter = name === 'img' ? dropCapLetter(attribs.alt ?? '') : null;
+        if (letter) append(letter);
         if (isPgBoilerplate(attribs) || isSkipped(name, attribs)) {
           skipAt = depth;
+          if (isImagePlaceholder(name, attribs)) placeholder = '';
           mark();
           return;
         }
@@ -161,10 +182,16 @@ export function parseXhtml(html: string, anchorIds: ReadonlySet<string> = new Se
       },
       ontext(data) {
         if (skipAt === -1) append(data);
+        else if (placeholder !== null) placeholder += data;
       },
       onclosetag(name) {
         if (skipAt !== -1) {
-          if (depth === skipAt) skipAt = -1;
+          if (depth === skipAt) {
+            skipAt = -1;
+            const letter = placeholder === null ? null : dropCapLetter(placeholder);
+            if (letter) append(letter);
+            placeholder = null;
+          }
         } else if (BLOCK_TAGS.has(name)) {
           flush();
           blockStack.pop();

@@ -123,6 +123,34 @@ describe('parseXhtml', () => {
     ]);
   });
 
+  it('keeps a drop-cap letter drawn as an image', () => {
+    expect(
+      texts(
+        '<p class="nind"><span class="letra"><img alt="M" src="m.png"/></span>R. BENNET was among</p>',
+      ),
+    ).toEqual(['MR. BENNET was among']);
+    expect(
+      texts(
+        '<p><span class="letra"><span id="img_images_i_035_b.png">M</span></span>R. BENNET</p>',
+      ),
+    ).toEqual(['MR. BENNET']);
+  });
+
+  it('does not read longer alt text or placeholders', () => {
+    expect(texts('<p><img alt="A ship" src="s.jpg"/>Then</p>')).toEqual(['Then']);
+    expect(texts('<p><img alt="a" src="s.jpg"/>Then</p>')).toEqual(['Then']);
+    expect(texts('<p><span id="img_x.jpg">Illustration:</span>Then</p>')).toEqual(['Then']);
+  });
+
+  it('skips illustration captions, even inside headings', () => {
+    expect(
+      blocks(
+        '<h2><a id="CHAPTER_II"/><img alt="" src="a.jpg"/><span class="caption">I hope Mr. Bingley will like it.</span><br/><br/>CHAPTER II.</h2>' +
+          '<div class="figcenter"><p class="caption">Piling up the fire.</p></div>',
+      ),
+    ).toEqual([{ kind: 'heading', level: 2, words: [{ text: 'CHAPTER' }, { text: 'II.' }] }]);
+  });
+
   it('drops ebookmaker linked-image pages', () => {
     expect(
       texts(
