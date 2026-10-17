@@ -73,7 +73,7 @@ exports[`pg46.epub3.images.epub > keeps its summary and first blocks stable 1`] 
         },
       ],
       "index": 0,
-      "title": "There are several editions of this ebook in the Project Gutenberg collection. Various characteristics of each ebook are listed to aid in selecting the preferred file. Click on any of the filenumbers belowto quickly view each ebook.",
+      "title": "There are several editions of this ebook in the Project Gutenberg collection…",
     },
     {
       "blocks": [
@@ -96,7 +96,7 @@ exports[`pg46.epub3.images.epub > keeps its summary and first blocks stable 1`] 
     "chapters": [
       {
         "index": 0,
-        "title": "There are several editions of this ebook in the Project Gutenberg collection. Various characteristics of each ebook are listed to aid in selecting the preferred file. Click on any of the filenumbers belowto quickly view each ebook.",
+        "title": "There are several editions of this ebook in the Project Gutenberg collection…",
         "wordCount": 90,
       },
       {

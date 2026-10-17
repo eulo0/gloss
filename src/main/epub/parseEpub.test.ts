@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Chapter } from '../../shared/book';
+import { MAX_TITLE_LENGTH } from './chapters';
 import { parseEpub, type ParsedBook } from './parseEpub';
 import { buildEpub, buildZip } from './testing/buildEpub';
 
@@ -59,16 +60,88 @@ describe('parseEpub', () => {
           },
         ],
         nav: [
-          ['big.xhtml#c1', 'Chapter I.', [['big.xhtml#c1', 'A nested entry is ignored']]],
+          ['big.xhtml#c1', 'It is a truth. Chapter I.', [['big.xhtml#c1', 'Nested, ignored']]],
           ['big.xhtml#c2', 'Chapter II.'],
         ],
       }),
     );
     expect(book.chapters.map((c) => [c.title, texts(c)])).toEqual([
       [null, ['Title page']],
-      ['Chapter I.', ['CHAPTER I.', 'It is a truth.']],
-      ['Chapter II.', ['CHAPTER II.', 'Mr. Bennet was.', 'Next.']],
+      // A label that is the heading after a caption sentence, or just the heading, gives the heading.
+      ['CHAPTER I.', ['CHAPTER I.', 'It is a truth.']],
+      ['CHAPTER II.', ['CHAPTER II.', 'Mr. Bennet was.', 'Next.']],
     ]);
+  });
+
+  it('reads Pride and Prejudice chapter openings (pg1342 markup)', async () => {
+    // Copied from the Gutenberg EPUB 3 (24 MB, too big for a fixture): captions sit inside the
+    // headings and start the TOC labels, and drop caps are images or plain spans.
+    const book = await parse(
+      await buildEpub({
+        chapters: [
+          {
+            href: 'h0.xhtml',
+            body:
+              '<h2 id="pgepubid00022"><a id="Chapter_I"/> <img alt="" src="i_030.jpg" id="img_images_i_030.jpg"/> <br/> <br/> Chapter I.</h2>' +
+              '<p class="nind"><span class="letra">I</span>T is a truth universally acknowledged.</p>' +
+              '<h2 id="pgepubid00028"> <a id="CHAPTER_II"/><img alt="" src="i_035_a.jpg" id="img_images_i_035_a.jpg"/> <span class="caption"> I hope Mr. Bingley will like it. </span> <br/> <br/> CHAPTER II. </h2>' +
+              '<p class="nind"><span class="letra"> <img alt="M" src="i_035_b.png" id="img_images_i_035_b.png"/></span>R. BENNET was among the earliest.</p>',
+          },
+          {
+            href: 'h2.xhtml',
+            body:
+              '<h2 id="pgepubid00224"> <a id="CHAPTER_XXVII"/><img alt="" src="i_218_a.jpg" id="img_images_i_218_a.jpg"/> <br/> <span class="caption"> “On the Stairs.” </span> <br/> <br/> CHAPTERXXVII.</h2>' +
+              '<p>With no greater events than these.</p>',
+          },
+        ],
+        nav: [
+          ['h0.xhtml#pgepubid00022', 'Chapter I.'],
+          ['h0.xhtml#pgepubid00028', 'I hope Mr. Bingley will like it. CHAPTER II.'],
+          ['h2.xhtml#pgepubid00224', '“On the Stairs.” CHAPTERXXVII.'],
+        ],
+      }),
+    );
+    expect(book.chapters.map((c) => [c.title, texts(c)])).toEqual([
+      ['Chapter I.', ['Chapter I.', 'IT is a truth universally acknowledged.']],
+      ['CHAPTER II.', ['CHAPTER II.', 'MR. BENNET was among the earliest.']],
+      // The missing space is in Gutenberg's file.
+      ['CHAPTERXXVII.', ['CHAPTERXXVII.', 'With no greater events than these.']],
+    ]);
+  });
+
+  it('keeps a TOC label that adds words to the heading', async () => {
+    const book = await parse(
+      await buildEpub({
+        chapters: [
+          { href: 'a.xhtml', body: '<h2>STAVE I.</h2><p>a</p>' },
+          { href: 'b.xhtml', body: '<h2>The Start</h2><p>b</p>' },
+        ],
+        nav: [
+          ['a.xhtml', "Stave I. Marley's Ghost"],
+          ['b.xhtml', 'Chapter 1: The Start'],
+        ],
+      }),
+    );
+    expect(book.chapters.map((c) => c.title)).toEqual([
+      "Stave I. Marley's Ghost",
+      'Chapter 1: The Start',
+    ]);
+  });
+
+  it('shortens a title longer than MAX_TITLE_LENGTH at a word', async () => {
+    const note =
+      'There are several editions of this ebook in the Project Gutenberg collection. Various characteristics of each ebook are listed.';
+    const book = await parse(
+      await buildEpub({
+        chapters: [{ href: 'a.xhtml', body: `<h4>${note}</h4><p>46</p>` }],
+        nav: [['a.xhtml', note]],
+      }),
+    );
+    const title = book.chapters[0].title ?? '';
+    expect(title).toBe(
+      'There are several editions of this ebook in the Project Gutenberg collection…',
+    );
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH + 1);
   });
 
   it('lets a chapter run across files and orders entries by reading position', async () => {
