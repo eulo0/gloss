@@ -3,9 +3,11 @@
 ## Planned data flow
 
 ```
-EPUB file
-  → parse (main/worker: yauzl + htmlparser2)
-  → chapters → paragraphs → words, each with a stable ID (book:chapter:paragraph:word)
+EPUB file (main shows the open dialog; the renderer never sends a path)
+  → parse (main: yauzl + htmlparser2, src/main/epub/), kept in memory per session
+  → chapters (one per top-level TOC entry) → paragraphs (blocks) → words, each with a stable ID
+    (book:chapter:paragraph:word, built only by src/shared/wordId.ts)
+  → renderer: openBook() → BookSummary (metadata + chapter list); getChapter(id, n) → one chapter
   → Kokoro worker (utilityProcess): text + voice → raw audio + spoken-word timestamps
   → map spoken words back to source word IDs ("Mr." → "Mister")
   → ffmpeg-static → Opus/MP3  +  chNN.json timing (Media-Overlays-style: text position, audio, start, end)
@@ -22,7 +24,7 @@ uses only the typed preload API (`src/shared/ipc.ts`); `src/workers/` hosts all 
 
 | #   | Slice               | Summary                                                         |
 | --- | ------------------- | --------------------------------------------------------------- |
-| 0   | Spike               | Can `kokoro-js` give word timestamps? Else Python sidecar       |
+| 0   | Spike               | Done: `kokoro-js` + timestamped export gives word timestamps    |
 | 1   | EPUB parsing        | Parse a Gutenberg EPUB into chapters/paragraphs/words with IDs  |
 | 2   | Reader view         | Render the text; design tokens, themes (needs `docs/design.md`) |
 | 3   | Generation pipeline | Kokoro worker, ffmpeg → Opus, timing JSON, cache, queue         |

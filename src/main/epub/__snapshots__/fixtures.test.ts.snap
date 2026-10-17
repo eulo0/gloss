@@ -1,0 +1,510 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`pg46.epub3.images.epub > keeps its summary and first blocks stable 1`] = `
+{
+  "chapters": [
+    {
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 4,
+          "words": [
+            "8557960c8d5e62e2:0:0:0 There",
+            "8557960c8d5e62e2:0:0:1 are",
+            "8557960c8d5e62e2:0:0:2 several",
+            "8557960c8d5e62e2:0:0:3 editions",
+            "8557960c8d5e62e2:0:0:4 of",
+            "8557960c8d5e62e2:0:0:5 this",
+            "8557960c8d5e62e2:0:0:6 ebook",
+            "8557960c8d5e62e2:0:0:7 in",
+            "8557960c8d5e62e2:0:0:8 the",
+            "8557960c8d5e62e2:0:0:9 Project",
+            "8557960c8d5e62e2:0:0:10 Gutenberg",
+            "8557960c8d5e62e2:0:0:11 collection.",
+            "8557960c8d5e62e2:0:0:12 Various",
+            "8557960c8d5e62e2:0:0:13 characteristics",
+            "8557960c8d5e62e2:0:0:14 of",
+            "8557960c8d5e62e2:0:0:15 each",
+            "8557960c8d5e62e2:0:0:16 ebook",
+            "8557960c8d5e62e2:0:0:17 are",
+            "8557960c8d5e62e2:0:0:18 listed",
+            "8557960c8d5e62e2:0:0:19 to",
+            "8557960c8d5e62e2:0:0:20 aid",
+            "8557960c8d5e62e2:0:0:21 in",
+            "8557960c8d5e62e2:0:0:22 selecting",
+            "8557960c8d5e62e2:0:0:23 the",
+            "8557960c8d5e62e2:0:0:24 preferred",
+            "8557960c8d5e62e2:0:0:25 file.",
+            "8557960c8d5e62e2:0:0:26 Click",
+            "8557960c8d5e62e2:0:0:27 on",
+            "8557960c8d5e62e2:0:0:28 any",
+            "8557960c8d5e62e2:0:0:29 of",
+            "8557960c8d5e62e2:0:0:30 the",
+            "8557960c8d5e62e2:0:0:31 filenumbers",
+            "8557960c8d5e62e2:0:0:32 belowto",
+            "8557960c8d5e62e2:0:0:33 quickly",
+            "8557960c8d5e62e2:0:0:34 view",
+            "8557960c8d5e62e2:0:0:35 each",
+            "8557960c8d5e62e2:0:0:36 ebook.",
+          ],
+        },
+        {
+          "kind": "paragraph",
+          "words": [
+            "8557960c8d5e62e2:0:1:0 46",
+          ],
+        },
+        {
+          "kind": "paragraph",
+          "words": [
+            "8557960c8d5e62e2:0:2:0 (Original",
+            "8557960c8d5e62e2:0:2:1 First",
+            "8557960c8d5e62e2:0:2:2 Edition",
+            "8557960c8d5e62e2:0:2:3 Cover;",
+            "8557960c8d5e62e2:0:2:4 1843",
+            "8557960c8d5e62e2:0:2:5 Original",
+            "8557960c8d5e62e2:0:2:6 Illustrations",
+            "8557960c8d5e62e2:0:2:7 in",
+            "8557960c8d5e62e2:0:2:8 Color",
+            "8557960c8d5e62e2:0:2:9 by",
+            "8557960c8d5e62e2:0:2:10 John",
+            "8557960c8d5e62e2:0:2:11 Leech)",
+          ],
+        },
+      ],
+      "index": 0,
+      "title": "There are several editions of this ebook in the Project Gutenberg collection…",
+    },
+    {
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 1,
+          "words": [
+            "8557960c8d5e62e2:1:0:0 A",
+            "8557960c8d5e62e2:1:0:1 CHRISTMAS",
+            "8557960c8d5e62e2:1:0:2 CAROL",
+          ],
+        },
+      ],
+      "index": 1,
+      "title": "A CHRISTMAS CAROL",
+    },
+  ],
+  "summary": {
+    "author": "Charles Dickens",
+    "chapters": [
+      {
+        "index": 0,
+        "title": "There are several editions of this ebook in the Project Gutenberg collection…",
+        "wordCount": 90,
+      },
+      {
+        "index": 1,
+        "title": "A CHRISTMAS CAROL",
+        "wordCount": 3,
+      },
+      {
+        "index": 2,
+        "title": "IN PROSE",
+        "wordCount": 3,
+      },
+      {
+        "index": 3,
+        "title": "A Ghost Story of Christmas",
+        "wordCount": 6,
+      },
+      {
+        "index": 4,
+        "title": "CHARLES DICKENS",
+        "wordCount": 65,
+      },
+      {
+        "index": 5,
+        "title": "CONTENTS",
+        "wordCount": 34,
+      },
+      {
+        "index": 6,
+        "title": "ILLUSTRATIONS",
+        "wordCount": 43,
+      },
+      {
+        "index": 7,
+        "title": "STAVE ONE.",
+        "wordCount": 6440,
+      },
+      {
+        "index": 8,
+        "title": "STAVE TWO.",
+        "wordCount": 6173,
+      },
+      {
+        "index": 9,
+        "title": "STAVE THREE.",
+        "wordCount": 8236,
+      },
+      {
+        "index": 10,
+        "title": "STAVE FOUR.",
+        "wordCount": 5371,
+      },
+      {
+        "index": 11,
+        "title": "STAVE FIVE.",
+        "wordCount": 2306,
+      },
+      {
+        "index": 12,
+        "title": "THE FULL PROJECT GUTENBERG™ LICENSE",
+        "wordCount": 0,
+      },
+    ],
+    "id": "8557960c8d5e62e2",
+    "language": "en",
+    "title": "A Christmas Carol in Prose; Being a Ghost Story of Christmas",
+  },
+}
+`;
+
+exports[`pg1934.epub.noimages.epub > keeps its summary and first blocks stable 1`] = `
+{
+  "chapters": [
+    {
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 1,
+          "words": [
+            "fa4daa1ea820ef7f:0:0:0 SONGS",
+            "fa4daa1ea820ef7f:0:0:1 OF",
+            "fa4daa1ea820ef7f:0:0:2 INNOCENCE",
+            "fa4daa1ea820ef7f:0:0:3 and",
+            "fa4daa1ea820ef7f:0:0:4 OF",
+            "fa4daa1ea820ef7f:0:0:5 EXPERIENCE",
+          ],
+        },
+        {
+          "kind": "heading",
+          "level": 2,
+          "words": [
+            "fa4daa1ea820ef7f:0:1:0 BY",
+            "fa4daa1ea820ef7f:0:1:1 WILLIAM",
+            "fa4daa1ea820ef7f:0:1:2 BLAKE",
+          ],
+        },
+        {
+          "kind": "paragraph",
+          "words": [
+            "fa4daa1ea820ef7f:0:2:0 london:",
+            "fa4daa1ea820ef7f:0:2:1 r.",
+            "fa4daa1ea820ef7f:0:2:2 brimley",
+            "fa4daa1ea820ef7f:0:2:3 johnson.",
+            "fa4daa1ea820ef7f:0:2:4 guildford:",
+            "fa4daa1ea820ef7f:0:2:5 a.",
+            "fa4daa1ea820ef7f:0:2:6 c.",
+            "fa4daa1ea820ef7f:0:2:7 curtis.",
+          ],
+        },
+      ],
+      "index": 0,
+      "title": "SONGS OF INNOCENCE and OF EXPERIENCE",
+    },
+    {
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "words": [
+            "fa4daa1ea820ef7f:1:0:0 CONTENTS",
+          ],
+        },
+        {
+          "kind": "paragraph",
+          "words": [
+            "fa4daa1ea820ef7f:1:1:0 SONGS",
+            "fa4daa1ea820ef7f:1:1:1 OF",
+            "fa4daa1ea820ef7f:1:1:2 INNOCENCE",
+          ],
+        },
+        {
+          "kind": "paragraph",
+          "words": [
+            "fa4daa1ea820ef7f:1:2:0 Introduction",
+          ],
+        },
+      ],
+      "index": 1,
+      "title": "CONTENTS",
+    },
+  ],
+  "summary": {
+    "author": "William Blake",
+    "chapters": [
+      {
+        "index": 0,
+        "title": "SONGS OF INNOCENCE and OF EXPERIENCE",
+        "wordCount": 18,
+      },
+      {
+        "index": 1,
+        "title": "CONTENTS",
+        "wordCount": 130,
+      },
+      {
+        "index": 2,
+        "title": "SONGS OF INNOCENCE",
+        "wordCount": 3,
+      },
+      {
+        "index": 3,
+        "title": "INTRODUCTION",
+        "wordCount": 122,
+      },
+      {
+        "index": 4,
+        "title": "THE SHEPHERD",
+        "wordCount": 63,
+      },
+      {
+        "index": 5,
+        "title": "THE ECHOING GREEN",
+        "wordCount": 142,
+      },
+      {
+        "index": 6,
+        "title": "THE LAMB",
+        "wordCount": 115,
+      },
+      {
+        "index": 7,
+        "title": "THE LITTLE BLACK BOY",
+        "wordCount": 251,
+      },
+      {
+        "index": 8,
+        "title": "THE BLOSSOM",
+        "wordCount": 44,
+      },
+      {
+        "index": 9,
+        "title": "THE CHIMNEY-SWEEPER",
+        "wordCount": 232,
+      },
+      {
+        "index": 10,
+        "title": "THE LITTLE BOY LOST",
+        "wordCount": 57,
+      },
+      {
+        "index": 11,
+        "title": "THE LITTLE BOY FOUND",
+        "wordCount": 57,
+      },
+      {
+        "index": 12,
+        "title": "LAUGHING SONG",
+        "wordCount": 103,
+      },
+      {
+        "index": 13,
+        "title": "A CRADLE SONG",
+        "wordCount": 169,
+      },
+      {
+        "index": 14,
+        "title": "THE DIVINE IMAGE",
+        "wordCount": 111,
+      },
+      {
+        "index": 15,
+        "title": "HOLY THURSDAY",
+        "wordCount": 130,
+      },
+      {
+        "index": 16,
+        "title": "NIGHT",
+        "wordCount": 253,
+      },
+      {
+        "index": 17,
+        "title": "SPRING",
+        "wordCount": 84,
+      },
+      {
+        "index": 18,
+        "title": "NURSE’S SONG",
+        "wordCount": 124,
+      },
+      {
+        "index": 19,
+        "title": "INFANT JOY",
+        "wordCount": 52,
+      },
+      {
+        "index": 20,
+        "title": "A DREAM",
+        "wordCount": 112,
+      },
+      {
+        "index": 21,
+        "title": "ON ANOTHER’S SORROW",
+        "wordCount": 220,
+      },
+      {
+        "index": 22,
+        "title": "SONGS OF EXPERIENCE",
+        "wordCount": 3,
+      },
+      {
+        "index": 23,
+        "title": "INTRODUCTION",
+        "wordCount": 92,
+      },
+      {
+        "index": 24,
+        "title": "EARTH’S ANSWER",
+        "wordCount": 110,
+      },
+      {
+        "index": 25,
+        "title": "THE CLOD AND THE PEBBLE",
+        "wordCount": 78,
+      },
+      {
+        "index": 26,
+        "title": "HOLY THURSDAY",
+        "wordCount": 96,
+      },
+      {
+        "index": 27,
+        "title": "THE LITTLE GIRL LOST",
+        "wordCount": 208,
+      },
+      {
+        "index": 28,
+        "title": "THE LITTLE GIRL FOUND",
+        "wordCount": 222,
+      },
+      {
+        "index": 29,
+        "title": "THE CHIMNEY-SWEEPER",
+        "wordCount": 99,
+      },
+      {
+        "index": 30,
+        "title": "NURSE’S SONG",
+        "wordCount": 66,
+      },
+      {
+        "index": 31,
+        "title": "THE SICK ROSE",
+        "wordCount": 37,
+      },
+      {
+        "index": 32,
+        "title": "THE FLY",
+        "wordCount": 71,
+      },
+      {
+        "index": 33,
+        "title": "THE ANGEL",
+        "wordCount": 107,
+      },
+      {
+        "index": 34,
+        "title": "THE TIGER",
+        "wordCount": 145,
+      },
+      {
+        "index": 35,
+        "title": "MY PRETTY ROSE TREE",
+        "wordCount": 62,
+      },
+      {
+        "index": 36,
+        "title": "AH, SUNFLOWER",
+        "wordCount": 52,
+      },
+      {
+        "index": 37,
+        "title": "THE LILY",
+        "wordCount": 33,
+      },
+      {
+        "index": 38,
+        "title": "THE GARDEN OF LOVE",
+        "wordCount": 94,
+      },
+      {
+        "index": 39,
+        "title": "THE LITTLE VAGABOND",
+        "wordCount": 148,
+      },
+      {
+        "index": 40,
+        "title": "LONDON",
+        "wordCount": 92,
+      },
+      {
+        "index": 41,
+        "title": "THE HUMAN ABSTRACT",
+        "wordCount": 139,
+      },
+      {
+        "index": 42,
+        "title": "INFANT SORROW",
+        "wordCount": 47,
+      },
+      {
+        "index": 43,
+        "title": "A POISON TREE",
+        "wordCount": 104,
+      },
+      {
+        "index": 44,
+        "title": "A LITTLE BOY LOST",
+        "wordCount": 159,
+      },
+      {
+        "index": 45,
+        "title": "A LITTLE GIRL LOST",
+        "wordCount": 165,
+      },
+      {
+        "index": 46,
+        "title": "A DIVINE IMAGE",
+        "wordCount": 47,
+      },
+      {
+        "index": 47,
+        "title": "A CRADLE SONG",
+        "wordCount": 90,
+      },
+      {
+        "index": 48,
+        "title": "TO TIRZAH",
+        "wordCount": 106,
+      },
+      {
+        "index": 49,
+        "title": "THE SCHOOLBOY",
+        "wordCount": 189,
+      },
+      {
+        "index": 50,
+        "title": "THE VOICE OF THE ANCIENT BARD",
+        "wordCount": 74,
+      },
+      {
+        "index": 51,
+        "title": "THE FULL PROJECT GUTENBERG™ LICENSE",
+        "wordCount": 0,
+      },
+    ],
+    "id": "fa4daa1ea820ef7f",
+    "language": "en",
+    "title": "Songs of Innocence and of Experience",
+  },
+}
+`;

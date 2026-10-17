@@ -3,7 +3,7 @@
 Each decision is numbered as in the original brief. To change one, propose it first; don't silently diverge.
 
 1. **Electron + Electron Forge (Vite + TypeScript template).** Consistent Chromium behaviour on Windows and an all-JS stack.
-2. **TTS: Kokoro, run locally.** Try `kokoro-js` first; fall back to a Python sidecar only if it can't provide word timestamps (decided in slice 0). Offline, free, audiobook-quality voices.
+2. **TTS: Kokoro, run locally.** `kokoro-js` with the `onnx-community/Kokoro-82M-v1.0-ONNX-timestamped` export, which returns per-phoneme durations (25 ms frames) alongside the audio; word times are derived from them. No Python sidecar (slice 0, `docs/spikes/kokoro-timestamps.md`). Offline, free, audiobook-quality voices.
 3. **Generate audio once, cache forever.** Per chapter: `chNN.mp3` (constant bitrate) or `.opus`, plus `chNN.json` with word timings. Generated on first open, then ahead in the background; "Prepare whole book" option. Cache keys hash text and voice settings. Generation is slow; replays should be instant and stable.
 4. **Timing JSON modelled on EPUB 3 Media Overlays** (text position, audio file, start, end). Keeps a SMIL export possible later.
 5. **Every source word has a stable ID** (book → chapter → paragraph → word). Kokoro's spoken words are mapped back to these IDs, handling cases like "Mr." read as "Mister".
