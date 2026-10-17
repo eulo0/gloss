@@ -64,35 +64,35 @@ describe('readEpub', () => {
     expect(book.spine[0].path).toBe('OEBPS/chapter one.xhtml');
   });
 
-  it('attaches EPUB 3 nav titles, ignoring fragments and non-toc navs', async () => {
+  it('reads top-level EPUB 3 nav entries with their fragments, ignoring other navs', async () => {
     const book = await readEpub(
       await buildEpub({
         chapters: [
           { href: 'a.xhtml', body: p('A') },
           { href: 'b%20c.xhtml', body: p('B') },
-          { href: 'd.xhtml', body: p('D') },
         ],
         nav: [
-          ['a.xhtml#start', 'Stave One'],
-          ['a.xhtml#later', 'Not this one'],
-          ['b%20c.xhtml', 'Stave Two'],
+          ['a.xhtml#start', 'Stave One', [['a.xhtml#sub', 'Nested']]],
+          ['b%20c.xhtml#x%20y', 'Stave Two'],
+          ['b%20c.xhtml', 'Whole file'],
         ],
       }),
     );
-    expect(book.spine.map((s) => s.title)).toEqual(['Stave One', 'Stave Two', null]);
+    expect(book.toc).toEqual([
+      { path: 'OEBPS/a.xhtml', fragment: 'start', title: 'Stave One' },
+      { path: 'OEBPS/b c.xhtml', fragment: 'x y', title: 'Stave Two' },
+      { path: 'OEBPS/b c.xhtml', fragment: null, title: 'Whole file' },
+    ]);
   });
 
-  it('falls back to EPUB 2 NCX titles', async () => {
+  it('falls back to top-level EPUB 2 NCX entries', async () => {
     const book = await readEpub(
       await buildEpub({
-        chapters: [
-          { href: 'a.xhtml', body: p('A') },
-          { href: 'b.xhtml', body: p('B') },
-        ],
-        ncx: [['b.xhtml#x', 'Second']],
+        chapters: [{ href: 'a.xhtml', body: p('A') }],
+        ncx: [['a.xhtml#x', 'Part', [['a.xhtml#y', 'Nested']]]],
       }),
     );
-    expect(book.spine.map((s) => s.title)).toEqual([null, 'Second']);
+    expect(book.toc).toEqual([{ path: 'OEBPS/a.xhtml', fragment: 'x', title: 'Part' }]);
   });
 
   it('refuses a non-zip as not-epub', async () => {
@@ -141,7 +141,7 @@ describe('readEpub', () => {
     });
     delete files['OEBPS/toc.ncx'];
     const book = await readEpub(await buildZip(files));
-    expect(book.spine[0].title).toBeNull();
+    expect(book.toc).toEqual([]);
   });
 });
 

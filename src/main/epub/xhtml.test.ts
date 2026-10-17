@@ -122,4 +122,24 @@ describe('parseXhtml', () => {
       'Text',
     ]);
   });
+
+  it('drops ebookmaker linked-image pages', () => {
+    expect(
+      texts(
+        '<div><img src="cover.jpg" alt="" class="x-ebookmaker-wrapper"/><br/><a href="a.xhtml#x" title="back">back</a></div>',
+      ),
+    ).toEqual([]);
+  });
+
+  it('reports the block index where requested anchors appear', () => {
+    const { anchors } = parseXhtml(
+      xhtml(
+        '<p>zero</p><h2 id="h">one</h2><p>two <a id="inline"/>still two</p>' +
+          '<div id="empty"></div><p id="unwanted">three</p>' +
+          '<footer class="pg-boilerplate"><h2 id="lic">gone</h2></footer>',
+      ),
+      new Set(['h', 'inline', 'empty', 'lic', 'missing']),
+    );
+    expect(Object.fromEntries(anchors)).toEqual({ h: 1, inline: 2, empty: 3, lic: 4 });
+  });
 });

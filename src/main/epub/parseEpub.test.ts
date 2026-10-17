@@ -12,7 +12,7 @@ async function parse(bytes: Buffer): Promise<ParsedBook> {
 const texts = (c: Chapter) => c.blocks.map((b) => b.words.map((w) => w.text).join(' '));
 
 describe('parseEpub', () => {
-  it('builds chapters and a summary with word counts', async () => {
+  it('builds a summary with word counts', async () => {
     const book = await parse(
       await buildEpub({
         title: 'Carol',
@@ -21,9 +21,14 @@ describe('parseEpub', () => {
         chapters: [
           { href: 'cover.xhtml', body: '<p>Cover</p>', linear: false },
           { href: 'a.xhtml', body: '<h2>One</h2><p>Marley was dead.</p>' },
-          { href: 'b.xhtml', body: '<div class="fig"></div>' },
+          { href: 'b.xhtml', body: '<h2 id="two">Two</h2>' },
+          { href: 'c.xhtml', body: '<div class="fig"></div>' },
         ],
-        nav: [['a.xhtml', 'Stave One']],
+        nav: [
+          ['a.xhtml', 'Stave One'],
+          ['b.xhtml#two', 'Stave Two'],
+          ['c.xhtml', 'Plates'],
+        ],
       }),
     );
     expect(book.summary).toEqual({
@@ -33,11 +38,98 @@ describe('parseEpub', () => {
       language: 'en',
       chapters: [
         { index: 0, title: 'Stave One', wordCount: 4 },
-        { index: 1, title: null, wordCount: 0 },
+        { index: 1, title: 'Stave Two', wordCount: 1 },
+        { index: 2, title: 'Plates', wordCount: 0 },
       ],
     });
     expect(texts(book.chapters[0])).toEqual(['One', 'Marley was dead.']);
-    expect(book.chapters[1].blocks).toEqual([]);
+    expect(book.chapters[2].blocks).toEqual([]);
+  });
+
+  it('splits one file into several chapters at TOC anchors', async () => {
+    const book = await parse(
+      await buildEpub({
+        chapters: [
+          {
+            href: 'big.xhtml',
+            body:
+              '<p>Title page</p>' +
+              '<div class="chapter"><h2 id="c1">CHAPTER I.</h2><p>It is a truth.</p></div>' +
+              '<div class="chapter" id="c2"><h2>CHAPTER II.</h2><p>Mr. Bennet <a id="c3"/>was.</p><p>Next.</p></div>',
+          },
+        ],
+        nav: [
+          ['big.xhtml#c1', 'Chapter I.', [['big.xhtml#c1', 'A nested entry is ignored']]],
+          ['big.xhtml#c2', 'Chapter II.'],
+        ],
+      }),
+    );
+    expect(book.chapters.map((c) => [c.title, texts(c)])).toEqual([
+      [null, ['Title page']],
+      ['Chapter I.', ['CHAPTER I.', 'It is a truth.']],
+      ['Chapter II.', ['CHAPTER II.', 'Mr. Bennet was.', 'Next.']],
+    ]);
+  });
+
+  it('lets a chapter run across files and orders entries by reading position', async () => {
+    const book = await parse(
+      await buildEpub({
+        chapters: [
+          { href: 'a.xhtml', body: '<h2 id="one">One</h2><p>a</p>' },
+          { href: 'b.xhtml', body: '<p>b</p><h2 id="two">Two</h2><p>c</p>' },
+          { href: 'c.xhtml', body: '<p>d</p>' },
+        ],
+        nav: [
+          ['b.xhtml#two', 'Two'],
+          ['a.xhtml#one', 'One'],
+          ['a.xhtml#missing', 'Missing anchor'],
+          ['elsewhere.xhtml', 'Not in the spine'],
+          ['a.xhtml', 'Same place as One'],
+        ],
+      }),
+    );
+    expect(book.chapters.map((c) => [c.title, texts(c)])).toEqual([
+      ['One', ['One', 'a', 'b']],
+      ['Two', ['Two', 'c', 'd']],
+    ]);
+  });
+
+  it('gives an entry inside skipped boilerplate an empty chapter', async () => {
+    const book = await parse(
+      await buildEpub({
+        chapters: [
+          { href: 'a.xhtml', body: '<p>Story.</p>' },
+          {
+            href: 'z.xhtml',
+            body: '<footer class="pg-boilerplate" id="pg-footer"><h2 id="lic">LICENSE</h2><p>Terms</p></footer>',
+          },
+        ],
+        nav: [
+          ['a.xhtml', 'Story'],
+          ['z.xhtml#lic', 'LICENSE'],
+        ],
+      }),
+    );
+    expect(book.summary.chapters).toEqual([
+      { index: 0, title: 'Story', wordCount: 1 },
+      { index: 1, title: 'LICENSE', wordCount: 0 },
+    ]);
+  });
+
+  it('falls back to one untitled chapter per spine item without a usable TOC', async () => {
+    const book = await parse(
+      await buildEpub({
+        chapters: [
+          { href: 'a.xhtml', body: '<p>A</p>' },
+          { href: 'b.xhtml', body: '' },
+        ],
+        nav: [['a.xhtml#nowhere', 'Broken']],
+      }),
+    );
+    expect(book.summary.chapters).toEqual([
+      { index: 0, title: null, wordCount: 1 },
+      { index: 1, title: null, wordCount: 0 },
+    ]);
   });
 
   it('falls back to "Untitled" when the OPF has no title', async () => {

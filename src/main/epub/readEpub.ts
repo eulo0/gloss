@@ -1,15 +1,13 @@
 import { createHash } from 'node:crypto';
 import { EpubError } from './errors';
 import { parseContainer, parseOpf, type ManifestItem } from './opf';
-import { parseNav, parseNcx, titlesByPath, type TocEntry } from './toc';
+import { parseNav, parseNcx, type TocEntry } from './toc';
 import { openZip, type Zip } from './zip';
 
 export interface SpineEntry {
   /** Zip path of the content document. */
   path: string;
   mediaType: string;
-  /** Title of the first TOC entry pointing into this file. */
-  title: string | null;
 }
 
 export interface EpubPackage {
@@ -17,8 +15,10 @@ export interface EpubPackage {
   title: string | null;
   author: string | null;
   language: string | null;
-  /** Linear spine items; chapter N is spine[N]. */
+  /** Linear spine items in reading order. */
   spine: SpineEntry[];
+  /** Top-level TOC entries (nav, else NCX); empty if the book has no usable TOC. */
+  toc: TocEntry[];
   /** Reads an entry as UTF-8 text. */
   readText(path: string): Promise<string>;
   close(): void;
@@ -32,7 +32,7 @@ export function bookIdOf(bytes: Buffer): string {
   return createHash('sha256').update(bytes).digest('hex').slice(0, 16);
 }
 
-/** Opens an EPUB held in memory: container → OPF → metadata, spine and TOC titles. */
+/** Opens an EPUB held in memory: container → OPF → metadata, spine and TOC. */
 export async function readEpub(bytes: Buffer): Promise<EpubPackage> {
   const zip = await openZip(bytes);
   try {
@@ -47,17 +47,13 @@ export async function readEpub(bytes: Buffer): Promise<EpubPackage> {
       if (!zip.has(item.path)) throw new EpubError('malformed', `Spine file missing: ${item.path}`);
     }
 
-    const titles = titlesByPath(await readToc(zip, readText, pkg.nav, pkg.ncx));
     return {
       bookId: bookIdOf(bytes),
       title: pkg.title,
       author: pkg.author,
       language: pkg.language,
-      spine: pkg.spine.map((item) => ({
-        path: item.path,
-        mediaType: item.mediaType,
-        title: titles.get(item.path) ?? null,
-      })),
+      spine: pkg.spine.map((item) => ({ path: item.path, mediaType: item.mediaType })),
+      toc: await readToc(zip, readText, pkg.nav, pkg.ncx),
       readText,
       close: () => zip.close(),
     };
@@ -67,7 +63,7 @@ export async function readEpub(bytes: Buffer): Promise<EpubPackage> {
   }
 }
 
-/** The TOC only supplies titles, so a missing or unreadable one just means no titles. */
+/** A missing TOC isn't an error: chapters then fall back to one per spine item. */
 async function readToc(
   zip: Zip,
   readText: (path: string) => Promise<string>,

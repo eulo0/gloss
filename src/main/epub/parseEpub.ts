@@ -1,5 +1,6 @@
 import type { Block, BookError, BookSummary, Chapter } from '../../shared/book';
 import { stripMarkerBoilerplate } from './boilerplate';
+import { splitChapters, type ParsedSpineItem } from './chapters';
 import { EpubError } from './errors';
 import { readEpub, type EpubPackage } from './readEpub';
 import { parseXhtml } from './xhtml';
@@ -18,23 +19,28 @@ export async function parseEpub(bytes: Buffer): Promise<ParseResult> {
   let pkg: EpubPackage | null = null;
   try {
     pkg = await readEpub(bytes);
-    const perChapter: Block[][] = [];
+    const items: ParsedSpineItem[] = [];
     let pgMarkup = false;
     for (const item of pkg.spine) {
-      // A non-HTML spine item still counts as a chapter, so later indices don't move.
       if (!HTML_TYPES.has(item.mediaType)) {
-        perChapter.push([]);
+        items.push({ path: item.path, blocks: [], anchors: new Map() });
         continue;
       }
-      const result = parseXhtml(await pkg.readText(item.path));
+      const anchorIds = new Set(
+        pkg.toc.flatMap((e) => (e.path === item.path && e.fragment ? [e.fragment] : [])),
+      );
+      const result = parseXhtml(await pkg.readText(item.path), anchorIds);
       pgMarkup ||= result.pgMarkup;
-      perChapter.push(result.blocks);
+      items.push({ path: item.path, blocks: result.blocks, anchors: result.anchors });
     }
-    const blocks = pgMarkup ? perChapter : stripMarkerBoilerplate(perChapter);
 
-    const chapters: Chapter[] = pkg.spine.map((item, index) => ({
+    const split = splitChapters(items, pkg.toc);
+    // Marker stripping empties chapters but never removes them, so chapter indices don't move.
+    const perChapter = split.map((c) => c.blocks);
+    const blocks: Block[][] = pgMarkup ? perChapter : stripMarkerBoilerplate(perChapter);
+    const chapters: Chapter[] = split.map((c, index) => ({
       index,
-      title: item.title,
+      title: c.title,
       blocks: blocks[index],
     }));
     const summary: BookSummary = {

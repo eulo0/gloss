@@ -6,6 +6,18 @@ export function dirOf(zipPath: string): string {
   return dir === '.' ? '' : dir;
 }
 
+/** The percent-decoded `#fragment` of an href, or null if it has none. */
+export function fragmentOf(href: string): string | null {
+  const i = href.indexOf('#');
+  if (i === -1 || i === href.length - 1) return null;
+  const raw = href.slice(i + 1);
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 /**
  * Resolves an href found in a file inside the zip to a zip entry path: relative to `baseDir`,
  * percent-decoded, without `#fragment` or `?query`. Returns null for external URLs, empty hrefs

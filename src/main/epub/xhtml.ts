@@ -6,6 +6,8 @@ export interface XhtmlResult {
   blocks: Block[];
   /** True if the file has current Gutenberg boilerplate markup (`.pg-boilerplate`, `#pg-header`…). */
   pgMarkup: boolean;
+  /** For each requested anchor ID found: the index of the first block at or after it. */
+  anchors: Map<string, number>;
 }
 
 /** Elements whose start or end ends the current block of text. */
@@ -88,10 +90,13 @@ function isSkipped(name: string, attribs: Record<string, string>): boolean {
  * once, so markup inside a word (`<i>wo</i>rd`) doesn't split it. A word gets `em` only if all of
  * it is inside i/em/cite; partly emphasised words get none.
  */
-export function parseXhtml(html: string): XhtmlResult {
+export function parseXhtml(html: string, anchorIds: ReadonlySet<string> = new Set()): XhtmlResult {
   const blocks: Block[] = [];
+  const anchors = new Map<string, number>();
   const blockStack: string[] = [];
   let pgMarkup = false;
+  /** Ebookmaker's "linked image" pages hold one image and a "back" link: no text to read. */
+  let imagePage = false;
   let depth = 0;
   /** Depth of the element being skipped, or -1. */
   let skipAt = -1;
@@ -126,10 +131,22 @@ export function parseXhtml(html: string): XhtmlResult {
     {
       onopentag(name, attribs) {
         depth++;
-        if (skipAt !== -1) return;
+        // Record anchors after a block start has flushed the text before it, so the anchor's
+        // position is the index of the first block at or after it. Anchors inside skipped
+        // content (e.g. the licence heading) still count.
+        const mark = () => {
+          const id = attribs.id;
+          if (id && anchorIds.has(id) && !anchors.has(id)) anchors.set(id, blocks.length);
+        };
+        if (skipAt !== -1) {
+          mark();
+          return;
+        }
         if (isPgBoilerplate(attribs)) pgMarkup = true;
+        if (name === 'img' && classes(attribs).includes('x-ebookmaker-wrapper')) imagePage = true;
         if (isPgBoilerplate(attribs) || isSkipped(name, attribs)) {
           skipAt = depth;
+          mark();
           return;
         }
         if (BLOCK_TAGS.has(name)) {
@@ -140,6 +157,7 @@ export function parseXhtml(html: string): XhtmlResult {
         } else if (name === 'br') {
           append(' ');
         }
+        mark();
       },
       ontext(data) {
         if (skipAt === -1) append(data);
@@ -161,7 +179,11 @@ export function parseXhtml(html: string): XhtmlResult {
   );
   parser.end(html);
   flush();
-  return { blocks, pgMarkup };
+  if (imagePage) {
+    for (const id of anchors.keys()) anchors.set(id, 0);
+    return { blocks: [], pgMarkup, anchors };
+  }
+  return { blocks, pgMarkup, anchors };
 }
 
 function toWords(text: string, em: [number, number][]): Word[] {

@@ -16,7 +16,10 @@ export interface Block {
 }
 
 export interface Chapter {
-  /** 0-based index among the book's linear spine items. */
+  /**
+   * 0-based index. A chapter starts at each top-level TOC entry (plus an untitled one for any text
+   * before the first); without a usable TOC, one per linear spine item.
+   */
   index: number;
   title: string | null;
   blocks: Block[];

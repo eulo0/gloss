@@ -1,9 +1,12 @@
 import { Parser } from 'htmlparser2';
-import { dirOf, resolveHref } from './paths';
+import { dirOf, fragmentOf, resolveHref } from './paths';
 
+/** A top-level table-of-contents entry. Each one starts a chapter (see chapters.ts). */
 export interface TocEntry {
   /** Zip path of the target file, fragment removed. */
   path: string;
+  /** Element ID the entry points at, or null for the start of the file. */
+  fragment: string | null;
   title: string;
 }
 
@@ -11,13 +14,22 @@ function collapse(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
 
-/** Reads the `toc` nav of an EPUB 3 navigation document, in document order. */
+function entry(baseDir: string, href: string, title: string): TocEntry | null {
+  const path = resolveHref(baseDir, href);
+  return path && title ? { path, fragment: fragmentOf(href), title } : null;
+}
+
+/**
+ * Reads the top level of the `toc` nav of an EPUB 3 navigation document, in document order.
+ * Nested entries (subtitles, illustrations, sections) stay inside their parent's chapter.
+ */
 export function parseNav(html: string, navPath: string): TocEntry[] {
   const baseDir = dirOf(navPath);
   const entries: TocEntry[] = [];
   let navDepth = 0;
   let inToc = false;
   let tocSeen = false;
+  let listDepth = 0;
   let href: string | null = null;
   let text = '';
 
@@ -31,7 +43,11 @@ export function parseNav(html: string, navPath: string): TocEntry[] {
             inToc = true;
             tocSeen = true;
           }
-        } else if (inToc && name === 'a') {
+        } else if (!inToc) {
+          return;
+        } else if (name === 'ol' || name === 'ul') {
+          listDepth++;
+        } else if (name === 'a' && listDepth === 1) {
           href = attribs.href ?? null;
           text = '';
         }
@@ -43,10 +59,13 @@ export function parseNav(html: string, navPath: string): TocEntry[] {
         if (name === 'nav') {
           navDepth--;
           if (navDepth === 0) inToc = false;
+        } else if (!inToc) {
+          return;
+        } else if (name === 'ol' || name === 'ul') {
+          listDepth--;
         } else if (name === 'a' && href !== null) {
-          const target = resolveHref(baseDir, href);
-          const title = collapse(text);
-          if (target && title) entries.push({ path: target, title });
+          const e = entry(baseDir, href, collapse(text));
+          if (e) entries.push(e);
           href = null;
         }
       },
@@ -57,7 +76,7 @@ export function parseNav(html: string, navPath: string): TocEntry[] {
   return entries;
 }
 
-/** Reads the navMap of an EPUB 2 NCX, in document order. */
+/** Reads the top-level navPoints of an EPUB 2 NCX, in document order. */
 export function parseNcx(xml: string, ncxPath: string): TocEntry[] {
   const baseDir = dirOf(ncxPath);
   const entries: TocEntry[] = [];
@@ -77,10 +96,9 @@ export function parseNcx(xml: string, ncxPath: string): TocEntry[] {
         else if (tag === 'text') {
           inText = true;
           text = '';
-        } else if (tag === 'content' && attribs.src) {
-          const target = resolveHref(baseDir, attribs.src);
-          const title = labels[labels.length - 1];
-          if (target && title) entries.push({ path: target, title });
+        } else if (tag === 'content' && attribs.src && labels.length === 1) {
+          const e = entry(baseDir, attribs.src, labels[0]);
+          if (e) entries.push(e);
         }
       },
       ontext(data) {
@@ -102,11 +120,4 @@ export function parseNcx(xml: string, ncxPath: string): TocEntry[] {
   );
   parser.end(xml);
   return entries;
-}
-
-/** Maps each file to the title of the first TOC entry that points into it. */
-export function titlesByPath(entries: TocEntry[]): Map<string, string> {
-  const titles = new Map<string, string>();
-  for (const e of entries) if (!titles.has(e.path)) titles.set(e.path, e.title);
-  return titles;
 }

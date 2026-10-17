@@ -27,16 +27,35 @@ export interface ChapterSpec {
   linear?: boolean;
 }
 
+/** A TOC entry: [href relative to the OPF folder, title, nested entries]. */
+export type TocSpec = [string, string, TocSpec[]?];
+
+function navList(entries: TocSpec[]): string {
+  const li = entries.map(
+    ([href, t, kids]) => `<li><a href="${href}">${t}</a>${kids ? navList(kids) : ''}</li>`,
+  );
+  return `<ol>${li.join('')}</ol>`;
+}
+
+function navPoints(entries: TocSpec[]): string {
+  return entries
+    .map(
+      ([href, t, kids]) =>
+        `<navPoint><navLabel><text>${t}</text></navLabel><content src="${href}"/>${kids ? navPoints(kids) : ''}</navPoint>`,
+    )
+    .join('');
+}
+
 export interface EpubSpec {
   opfPath?: string;
   title?: string;
   creator?: string;
   language?: string;
   chapters: ChapterSpec[];
-  /** EPUB 3 nav entries: [href relative to the OPF folder, title]. */
-  nav?: [string, string][];
-  /** EPUB 2 NCX entries: [href relative to the OPF folder, title]. */
-  ncx?: [string, string][];
+  /** EPUB 3 nav entries. */
+  nav?: TocSpec[];
+  /** EPUB 2 NCX entries. */
+  ncx?: TocSpec[];
   /** Extra files, or overrides, by zip path. */
   extra?: ZipFiles;
 }
@@ -79,20 +98,14 @@ export function epubFiles(spec: EpubSpec): ZipFiles {
     items.push(
       '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>',
     );
-    const links = spec.nav.map(([href, t]) => `<li><a href="${href}">${t}</a></li>`).join('');
     files[dir + 'nav.xhtml'] = xhtml(
       `<nav epub:type="landmarks"><ol><li><a href="x.xhtml">Not the TOC</a></li></ol></nav>` +
-        `<nav epub:type="toc"><ol>${links}</ol></nav>`,
+        `<nav epub:type="toc">${navList(spec.nav)}</nav>`,
     );
   }
   if (spec.ncx) {
     items.push('<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>');
-    const points = spec.ncx
-      .map(
-        ([href, t], i) =>
-          `<navPoint id="n${i}" playOrder="${i + 1}"><navLabel><text>${t}</text></navLabel><content src="${href}"/></navPoint>`,
-      )
-      .join('');
+    const points = navPoints(spec.ncx);
     files[dir + 'toc.ncx'] =
       `<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head/><docTitle><text>Doc</text></docTitle><navMap>${points}</navMap></ncx>`;
   }
